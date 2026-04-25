@@ -1,228 +1,237 @@
-/* Pulse Earth — main app glue */
-(function () {
+/* Mirror.world — application bootstrap & UI glue */
+(function (g) {
   "use strict";
-  const C = window.PULSE_CONFIG;
-  const $ = U.$;
-  const $$ = U.$$;
 
-  // DOM refs
-  const loader   = $("#loader");
-  const canvas   = $("#globe");
-  const statLive = $("#statLive");
-  const statTotal= $("#statTotal");
-  const stream   = $("#streamBar");
-  const feedList = $("#feedList");
-  const msgInput = $("#msgInput");
-  const msgCount = $("#msgCount");
-  const locHint  = $("#locHint");
-  const aboutBtn = $("#aboutBtn");
-  const heatBtn  = $("#heatBtn");
-  const shareBtn = $("#shareBtn");
+  var DATA = null;
+  var DIST = null;
+  var STATE = { questions: [], idx: 0, result: null };
 
-  // Init Firebase if configured (so analytics & store can use it)
-  try {
-    const f = C.firebase;
-    if (f.apiKey && f.projectId && f.appId && window.firebase) {
-      if (!firebase.apps.length) firebase.initializeApp(f);
+  function boot() {
+    Promise.all([
+      U.fetchJSON("./data/questions.json"),
+      U.fetchJSON("./data/distribution.json")
+    ]).then(function (arr) {
+      DATA = arr[0];
+      DIST = arr[1];
+      STATE.questions = DATA.questions.slice();
+
+      VIEWS.renderHero(DIST.active_pool);
+      bindHome();
+      bindQuiz();
+      bindResult();
+      handleInitialRoute();
+    }).catch(function (err) {
+      console.error("[mw] load error", err);
+      var el = document.getElementById("heroCount");
+      if (el) el.textContent = "—";
+      alert("データの読み込みに失敗しました。ページを再読み込みしてください。");
+    });
+  }
+
+  function handleInitialRoute() {
+    var h = (location.hash || "").toLowerCase();
+    if (h === "#quiz") { startQuiz(); }
+    else if (h === "#result") {
+      var r = computeResult();
+      if (r && r.answeredCount > 0) showResult(r); else VIEWS.show("home");
     }
-  } catch (e) { console.warn("Firebase init skipped:", e); }
+    else { VIEWS.show("home"); }
+  }
 
-  Analytics.init();
-  Globe.init(canvas);
+  function bindHome() {
+    U.on(document.getElementById("startBtn"), "click", function () {
+      MWA.track("home.start_click");
+      startQuiz();
+    });
+  }
 
-  setTimeout(() => loader.classList.add("is-hidden"), 700);
+  function bindQuiz() {
+    U.on(document.getElementById("choiceA"), "click", function () { pick("a"); });
+    U.on(document.getElementById("choiceB"), "click", function () { pick("b"); });
+    U.on(document.getElementById("skipBtn"),  "click", function () { pick("skip"); });
+    U.on(document.getElementById("backBtn"),  "click", function () {
+      if (STATE.idx > 0) { STATE.idx--; VIEWS.renderQuestion(STATE); }
+      else { VIEWS.show("home"); location.hash = ""; }
+    });
+    U.on(document.getElementById("resetBtn"), "click", function () {
+      if (!confirm("最初から始めますか？回答はリセットされます。")) return;
+      STORE.clearAnswers();
+      STATE.idx = 0;
+      VIEWS.renderQuestion(STATE);
+      MWA.track("quiz.reset");
+    });
 
-  Geo.resolve({ allowPrompt: false }).then((loc) => {
-    locHint.innerHTML = `📍 推定位置: <strong>${U.escapeHTML(loc.place)}</strong>`;
-  });
+    document.addEventListener("keydown", function (e) {
+      var view = U.$('.view[aria-hidden="false"]');
+      if (!view || view.getAttribute("data-view") !== "quiz") return;
+      if (e.key === "1" || e.key === "ArrowLeft") pick("a");
+      else if (e.key === "2" || e.key === "ArrowRight") pick("b");
+      else if (e.key === "Backspace") {
+        if (STATE.idx > 0) { STATE.idx--; VIEWS.renderQuestion(STATE); }
+      }
+    });
+  }
 
-  Store.init({
-    onPulse: (p) => {
-      const meta = C.emotions[p.emotion];
-      if (!meta) return;
-      Globe.spawnPulse(p.lat, p.lon, meta.color, { big: !!p.self });
-      addFeedItem(p);
-      if (C.flags.showStreamBar && p.message) addStreamItem(p);
-    },
-    onCounts: ({ live, total }) => {
-      animateNumber(statLive, parseInt(statLive.textContent.replace(/,/g, "") || "0", 10), live, 600);
-      animateNumber(statTotal, parseInt(statTotal.textContent.replace(/,/g, "") || "0", 10), total, 800);
+  function startQuiz() {
+    STATE.idx = 0;
+    var ans = STORE.readAnswers();
+    for (var i = 0; i < STATE.questions.length; i++) {
+      if (!ans.hasOwnProperty(STATE.questions[i].id)) { STATE.idx = i; break; }
+      if (i === STATE.questions.length - 1) STATE.idx = i;
     }
-  });
+    location.hash = "#quiz";
+    VIEWS.show("quiz");
+    VIEWS.renderQuestion(STATE);
+    MWA.track("quiz.start");
+  }
 
-  // emotion buttons
-  let activeEmotion = null;
-  $$(".emo").forEach((btn) => {
-    btn.addEventListener("click", () => fire(btn.dataset.emo, btn));
-  });
-  msgInput.addEventListener("input", () => {
-    msgInput.value = msgInput.value.slice(0, C.limits.msgMax);
-    msgCount.textContent = `${msgInput.value.length}/${C.limits.msgMax}`;
-  });
+  function pick(which) {
+    var q = STATE.questions[STATE.idx];
+    if (!q) return;
+    var v = which === "a" ? q.a.v : which === "b" ? q.b.v : 0;
+    STORE.setAnswer(q.id, v);
+    MWA.track("quiz.answer");
+    advance();
+  }
 
-  async function fire(emotion, btnEl) {
-    const loc = await Geo.resolve({ allowPrompt: false });
-    const lat = loc.lat + (Math.random() - 0.5) * 0.6;
-    const lon = loc.lon + (Math.random() - 0.5) * 0.6;
-    const raw = { emotion, message: msgInput.value, lat, lon, place: loc.place };
-    const r = Security.validatePulse(raw);
-    if (!r.ok) {
-      U.toast(r.errors[0], "error");
-      Analytics.track("pulse_rejected", { reason: r.errors[0] });
+  function advance() {
+    if (STATE.idx >= STATE.questions.length - 1) {
+      finishQuiz();
       return;
     }
-    Security.markFired();
-    activeEmotion = emotion;
-    btnEl.classList.add("is-firing");
-    setTimeout(() => btnEl.classList.remove("is-firing"), 700);
-    haptic();
-
-    try {
-      await Store.send(r.data);
-      U.toast(`${C.emotions[emotion].face} 地球に灯りました`, "success");
-      Analytics.track("pulse_sent", { emotion, hasMsg: !!r.data.message });
-      msgInput.value = "";
-      msgCount.textContent = `0/${C.limits.msgMax}`;
-    } catch (e) {
-      U.toast("送信に失敗しました", "error");
-      console.error(e);
-    }
+    STATE.idx += 1;
+    VIEWS.renderQuestion(STATE);
   }
 
-  function haptic() { try { navigator.vibrate?.(15); } catch {} }
-
-  function addFeedItem(p) {
-    const meta = C.emotions[p.emotion]; if (!meta) return;
-    const li = document.createElement("li");
-    li.className = "feed-item";
-    li.innerHTML = `
-      <div class="feed-item__face">${meta.face}</div>
-      <div class="feed-item__body">
-        <div class="feed-item__loc">${U.escapeHTML(p.place || "Earth")} · ${U.fmtTime(p.createdAtMs)}</div>
-        <div class="feed-item__msg ${p.message ? "" : "feed-item__msg--empty"}">${
-          p.message ? U.escapeHTML(p.message) : meta.label
-        }</div>
-      </div>`;
-    feedList.prepend(li);
-    while (feedList.children.length > C.limits.feedMax) feedList.lastChild.remove();
+  function computeResult() {
+    var ans = STORE.readAnswers();
+    var n = 0; for (var k in ans) if (ans.hasOwnProperty(k)) n++;
+    if (n === 0) return null;
+    var r = ENGINE.score(ans, DATA, DIST);
+    r.answeredCount = n;
+    return r;
   }
 
-  function addStreamItem(p) {
-    const meta = C.emotions[p.emotion]; if (!meta || !p.message) return;
-    const span = document.createElement("div");
-    span.className = "stream-bar__item";
-    span.innerHTML = `<span class="se">${meta.face}</span>${U.escapeHTML(p.message)}<span class="sm">— ${U.escapeHTML(p.place || "Earth")}</span>`;
-    stream.appendChild(span);
-    setTimeout(() => span.remove(), 14500);
-  }
-
-  function animateNumber(el, from, to, ms) {
-    const start = performance.now();
-    function step(now) {
-      const k = Math.min(1, (now - start) / ms);
-      const v = Math.round(from + (to - from) * easeOut(k));
-      el.textContent = v.toLocaleString();
-      if (k < 1) requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
-  }
-  const easeOut = (t) => 1 - Math.pow(1 - t, 3);
-
-  // modals
-  function openModal(id) {
-    const m = document.getElementById(id); if (!m) return;
-    m.hidden = false; document.body.style.overflow = "hidden";
-    Analytics.track("modal_open", { id });
-  }
-  function closeModal(m) { m.hidden = true; document.body.style.overflow = ""; }
-
-  document.addEventListener("click", (e) => {
-    if (e.target.matches("[data-close]") || e.target.closest("[data-close]")) {
-      const m = e.target.closest(".modal"); if (m) closeModal(m);
-    }
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") $$(".modal").forEach((m) => { if (!m.hidden) closeModal(m); });
-  });
-
-  aboutBtn.addEventListener("click", () => openModal("aboutModal"));
-  const openPrivacy = $("#openPrivacy");
-  if (openPrivacy) openPrivacy.addEventListener("click", (e) => {
-    e.preventDefault(); closeModal($("#aboutModal")); openModal("privacyModal");
-  });
-
-  // heatmap
-  heatBtn.addEventListener("click", () => { renderHeat(); openModal("heatModal"); });
-  function renderHeat() {
-    const stats = Store.todayStats();
-    const sum = $("#heatSummary");
-    sum.innerHTML = `
-      <div class="heat-summary__cell"><div class="heat-summary__num">${stats.total.toLocaleString()}</div><div class="heat-summary__lab">total today</div></div>
-      <div class="heat-summary__cell"><div class="heat-summary__num">${stats.live.toLocaleString()}</div><div class="heat-summary__lab">live now</div></div>
-    `;
-    const max = Math.max(1, ...Object.values(stats.byEmo));
-    const bars = $("#heatBars");
-    bars.innerHTML = "";
-    for (const [k, meta] of Object.entries(C.emotions)) {
-      const v = stats.byEmo[k] || 0;
-      const pct = (v / max) * 100;
-      const row = document.createElement("div");
-      row.className = "heat-bar"; row.style.setProperty("--c", meta.color);
-      row.innerHTML = `
-        <div class="heat-bar__face">${meta.face}</div>
-        <div class="heat-bar__rail"><div class="heat-bar__fill" style="width:${pct}%"></div></div>
-        <div class="heat-bar__num">${v.toLocaleString()}</div>`;
-      bars.appendChild(row);
-    }
-  }
-
-  // share modal
-  shareBtn.addEventListener("click", () => {
-    const stats = Store.todayStats();
-    const loc = Geo.cached || { place: "Earth" };
-    Share.render($("#shareCanvas"), {
-      emotion: activeEmotion || "joy",
-      message: msgInput.value || (activeEmotion ? "" : "今、世界とつながった。"),
-      place: loc.place,
-      total: stats.total,
-      live: stats.live
+  function finishQuiz() {
+    var r = computeResult();
+    if (!r) { VIEWS.show("home"); return; }
+    STATE.result = r;
+    STORE.appendHistory({
+      ts: Date.now(),
+      code: r.code,
+      title: r.title.name,
+      oneIn: r.rarity.oneIn
     });
-    openModal("shareModal");
-  });
-  $("#shareDownload").addEventListener("click", () => {
-    const a = document.createElement("a");
-    a.href = $("#shareCanvas").toDataURL("image/png");
-    a.download = `pulse-earth-${Date.now()}.png`;
-    a.click();
-    Analytics.track("share_download");
-  });
-  $("#shareCopy").addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(location.href);
-      U.toast("URLをコピーしました", "success");
-      Analytics.track("share_copy");
-    } catch { U.toast("コピーに失敗しました", "error"); }
-  });
-  const tw = $("#shareTwitter");
-  const txt = encodeURIComponent("🌍 世界の感情がリアルタイムで降り注ぐ地球 #PulseEarth\n");
-  tw.href = `https://twitter.com/intent/tweet?text=${txt}&url=${encodeURIComponent(location.href)}`;
-  tw.addEventListener("click", () => Analytics.track("share_twitter"));
+    MWA.track("quiz.finish");
+    showResult(r);
+  }
 
-  document.addEventListener("visibilitychange", () => {
-    Globe.setPaused(document.hidden);
-  });
+  function showResult(r) {
+    location.hash = "#result";
+    VIEWS.show("result");
+    VIEWS.renderResult(r);
+  }
 
-  // keyboard quick fire (1-8)
-  document.addEventListener("keydown", (e) => {
-    if (document.activeElement === msgInput) return;
-    const idx = parseInt(e.key, 10);
-    if (!isNaN(idx) && idx >= 1 && idx <= 8) {
-      const btn = $$(".emo")[idx - 1];
-      if (btn) btn.click();
+  function bindResult() {
+    U.on(document.getElementById("restartBtn"), "click", function () {
+      STORE.clearAnswers();
+      STATE.idx = 0;
+      MWA.track("result.restart");
+      startQuiz();
+    });
+
+    U.on(document.getElementById("shareXBtn"), "click", function () {
+      if (!STATE.result) return;
+      MWA.track("share.x");
+      var r = STATE.result;
+      var url = location.origin + location.pathname;
+      var text = "わたしは「" + r.title.name + "」。\n世界で " + r.rarity.oneIn.toLocaleString("en-US") + " 人に 1 人しかいないらしい。\nあなたは何タイプ？ " + url + " #MirrorWorld";
+      var u = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text);
+      window.open(u, "_blank", "noopener,noreferrer");
+    });
+
+    U.on(document.getElementById("shareLineBtn"), "click", function () {
+      if (!STATE.result) return;
+      MWA.track("share.line");
+      var r = STATE.result;
+      var url = location.origin + location.pathname;
+      var text = "わたしは「" + r.title.name + "」。世界で " + r.rarity.oneIn.toLocaleString("en-US") + " 人に 1 人。\n→ " + url;
+      var u = "https://line.me/R/msg/text/?" + encodeURIComponent(text);
+      window.open(u, "_blank", "noopener,noreferrer");
+    });
+
+    U.on(document.getElementById("copyLinkBtn"), "click", function () {
+      MWA.track("share.copy");
+      var url = location.origin + location.pathname;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () { flash("URL をコピーしました"); });
+      } else {
+        prompt("この URL をコピーしてください", url);
+      }
+    });
+
+    U.on(document.getElementById("downloadBtn"), "click", function () {
+      MWA.track("share.download");
+      var c = document.getElementById("cardCanvas");
+      SHARE.download(c, "mirror-world-" + (STATE.result ? STATE.result.code : "card") + ".png");
+    });
+
+    U.on(document.getElementById("waitlistBtn"), "click", function (e) {
+      e.preventDefault();
+      MWA.track("waitlist.open");
+      var d = document.getElementById("waitDialog");
+      if (d && d.showModal) d.showModal();
+      else flash("通知リストは準備中です");
+    });
+
+    var form = document.getElementById("waitForm");
+    U.on(form, "submit", function (e) {
+      var btn = e.submitter || document.activeElement;
+      if (!btn || btn.value !== "ok") return;
+
+      var input = document.getElementById("waitEmail");
+      var email = input ? String(input.value || "").trim() : "";
+      if (!email) return;
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        alert("メールアドレスの形式を確認してください。");
+        e.preventDefault(); return;
+      }
+      MWA.track("waitlist.submit");
+      var body = "I'd like early access to Mirror Pro.%0A%0A(my email: " + encodeURIComponent(email) + ")";
+      var u = "https://github.com/guttyanneruuuuuu/service10/issues/new?title=" +
+              encodeURIComponent("Mirror Pro waitlist") + "&body=" + body;
+      window.open(u, "_blank", "noopener,noreferrer");
+    });
+  }
+
+  var flashEl = null;
+  function flash(msg) {
+    if (!flashEl) {
+      flashEl = document.createElement("div");
+      flashEl.style.cssText = "position:fixed;left:50%;bottom:24px;transform:translateX(-50%);" +
+        "background:rgba(0,0,0,.8);color:#fff;padding:10px 16px;border-radius:99px;font-size:13px;" +
+        "z-index:1000;box-shadow:0 6px 20px rgba(0,0,0,.4);transition:opacity .3s ease;opacity:0;";
+      document.body.appendChild(flashEl);
     }
+    flashEl.textContent = msg;
+    flashEl.style.opacity = "1";
+    clearTimeout(flashEl._t);
+    flashEl._t = setTimeout(function () { flashEl.style.opacity = "0"; }, 1800);
+  }
+
+  window.addEventListener("hashchange", function () {
+    var h = (location.hash || "").toLowerCase();
+    if (h === "#quiz") VIEWS.show("quiz");
+    else if (h === "#result") {
+      if (STATE.result) VIEWS.show("result");
+      else { var r = computeResult(); if (r) showResult(r); else VIEWS.show("home"); }
+    }
+    else VIEWS.show("home");
   });
 
-  console.log(`%cPulse Earth%c v${C.version} · backend=${Store.backend}`,
-    "color:#5ae0e0;font-weight:800;letter-spacing:.2em",
-    "color:#7a7f93");
-})();
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+})(window);

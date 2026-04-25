@@ -1,40 +1,52 @@
-/* Mirror.world — privacy-first analytics */
+/* Mirror.world — privacy-first analytics
+ * Anonymous counters in localStorage. No IP / UA / cookies.
+ */
 (function (g) {
   "use strict";
-  const C = g.MIRROR_CONFIG;
-  const KEY = "mw:analytics";
-  const MAX = 300;
 
-  function readBuf() { try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch { return []; } }
-  function writeBuf(a) { try { localStorage.setItem(KEY, JSON.stringify(a.slice(-MAX))); } catch {} }
-  function sid() {
-    let s = sessionStorage.getItem("mw:sid");
-    if (!s) { s = Math.random().toString(36).slice(2, 12); sessionStorage.setItem("mw:sid", s); }
-    return s;
+  var KEY = "mw.metrics.v1";
+
+  function read() {
+    try {
+      var v = localStorage.getItem(KEY);
+      if (!v) return { events: {}, started: Date.now() };
+      var p = JSON.parse(v);
+      if (!p || typeof p !== "object") return { events: {}, started: Date.now() };
+      if (!p.events) p.events = {};
+      return p;
+    } catch (_) { return { events: {}, started: Date.now() }; }
+  }
+  function write(o) {
+    try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (_) {}
   }
 
-  const start = Date.now();
-  const A = {
-    init() {
+  function track(name, props) {
+    if (!name) return;
+    name = String(name).slice(0, 40);
+    var bag = read();
+    bag.events[name] = (bag.events[name] || 0) + 1;
+    write(bag);
+
+    var url = g.MIRROR_BEACON_URL;
+    if (url && navigator.sendBeacon) {
       try {
-        if (g.firebase && firebase.apps?.length && C.firebase.measurementId && firebase.analytics) {
-          firebase.analytics();
-        }
-      } catch {}
-      A.track("session_start", { lang: navigator.language, ua: navigator.userAgent.slice(0, 100), w: innerWidth, h: innerHeight });
-      addEventListener("beforeunload", () => A.track("session_end", { dur: Date.now() - start }));
-      addEventListener("error", (e) => A.track("js_error", { m: String(e.message).slice(0, 200) }));
-    },
-    track(name, params = {}) {
-      const evt = { n: name, t: Date.now(), s: sid(), p: params };
-      const buf = readBuf(); buf.push(evt); writeBuf(buf);
-      try {
-        if (g.firebase && firebase.apps?.length && C.firebase.measurementId && firebase.analytics) {
-          firebase.analytics().logEvent(name, params);
-        }
-      } catch {}
-    },
-    snapshot: readBuf
-  };
-  g.Analytics = A;
+        var body = JSON.stringify({
+          n: name,
+          p: props || null,
+          ts: Date.now(),
+          path: location.pathname,
+          ref: document.referrer ? new URL(document.referrer).hostname : ""
+        });
+        navigator.sendBeacon(url, body);
+      } catch (_) {}
+    }
+
+    if (g.MIRROR_DEBUG) console.log("[mw]", name, props || "");
+  }
+
+  function snapshot() { return read(); }
+
+  setTimeout(function () { track("pv"); }, 50);
+
+  g.MWA = { track: track, snapshot: snapshot };
 })(window);

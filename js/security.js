@@ -1,37 +1,38 @@
-/* Mirror.world — input validation & rate limit */
+/* Mirror.world — security hardening (client-side) */
 (function (g) {
   "use strict";
-  const C = g.MIRROR_CONFIG;
-  const Q = g.MIRROR_QUESTIONS;
 
-  const Sec = {
-    /* Validate a single submitted answer payload */
-    validateAnswer(qid, choiceKey) {
-      const q = Q.find((x) => x.id === qid);
-      if (!q) return { ok: false, error: "unknown_question" };
-      const c = q.choices.find((x) => x.key === choiceKey);
-      if (!c) return { ok: false, error: "unknown_choice" };
-      return { ok: true };
-    },
+  // Prevent file drag-drops navigating to file
+  ["dragover", "drop"].forEach(function (ev) {
+    g.addEventListener(ev, function (e) { e.preventDefault(); }, false);
+  });
 
-    /* Check device-level cooldown between full sessions */
-    sessionAllowed() {
-      const last = Number(localStorage.getItem("mw:lastSession") || 0);
-      const left = C.limits.cooldownMs - (Date.now() - last);
-      if (left > 0) return { ok: false, secondsLeft: Math.ceil(left / 1000) };
-      return { ok: true };
-    },
+  // Disable context-menu on the share canvas
+  document.addEventListener("contextmenu", function (e) {
+    if (e.target && e.target.id === "cardCanvas") e.preventDefault();
+  });
 
-    markSession() {
-      try { localStorage.setItem("mw:lastSession", String(Date.now())); } catch {}
-    },
+  // Strip risky chars from email field
+  document.addEventListener("input", function (e) {
+    var t = e.target;
+    if (!t || t.id !== "waitEmail") return;
+    t.value = String(t.value || "").replace(/[\s<>"'`\\]/g, "").slice(0, 120);
+  });
 
-    sanitizeEmail(s) {
-      const v = String(s || "").trim().slice(0, 120);
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return null;
-      return v;
+  // Anti-clickjacking
+  try {
+    if (g.top !== g.self) {
+      try { g.top.location = g.self.location; }
+      catch (_) { document.documentElement.innerHTML = ""; }
     }
-  };
+  } catch (_) {}
 
-  g.Security = Sec;
+  function sanitize(s, max) {
+    s = String(s == null ? "" : s);
+    s = s.replace(/[<>]/g, "");
+    if (max && s.length > max) s = s.slice(0, max);
+    return s;
+  }
+
+  g.SEC = { sanitize: sanitize };
 })(window);

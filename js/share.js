@@ -1,101 +1,165 @@
-/* Pulse Earth — share-card image generator (1200x630). */
+/* Mirror.world — share-card generator (1200x630) */
 (function (g) {
   "use strict";
-  const C = g.PULSE_CONFIG;
 
-  const Share = {};
+  var W = 1200, H = 630;
 
-  Share.draw = function (ctx, opts = {}) {
-    const W = ctx.canvas.width, H = ctx.canvas.height;
-    const emotion = opts.emotion || "joy";
-    const message = opts.message || "";
-    const place = opts.place || "Earth";
-    const totalToday = opts.totalToday || 0;
-    const emo = C.emotions[emotion] || C.emotions.joy;
+  function draw(canvas, result) {
+    if (!canvas || !canvas.getContext) return;
+    canvas.width = W; canvas.height = H;
+    var ctx = canvas.getContext("2d");
 
-    const bg = ctx.createLinearGradient(0, 0, W, H);
-    bg.addColorStop(0, "#000814");
-    bg.addColorStop(0.5, "#06122a");
-    bg.addColorStop(1, "#000814");
-    ctx.fillStyle = bg;
+    var color = (result && result.title && result.title.color) || "#7c5cff";
+
+    var grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, "#0c0a1f");
+    grad.addColorStop(1, "#1a0e2e");
+    ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
 
-    ctx.fillStyle = "rgba(255,255,255,0.8)";
-    for (let i = 0; i < 180; i++) {
-      const x = Math.random() * W, y = Math.random() * H;
-      const r = Math.random() * 1.4;
-      ctx.globalAlpha = 0.3 + Math.random() * 0.6;
-      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-    }
-    ctx.globalAlpha = 1;
+    var glow = ctx.createRadialGradient(W * 0.78, H * 0.25, 30, W * 0.78, H * 0.25, 520);
+    glow.addColorStop(0, withAlpha(color, 0.55));
+    glow.addColorStop(1, withAlpha(color, 0));
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, H);
 
-    const cx = W * 0.78, cy = H * 0.55, r = 220;
-    const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 1.4);
-    grd.addColorStop(0, "rgba(70,120,255,0.55)");
-    grd.addColorStop(0.5, "rgba(40,80,200,0.25)");
-    grd.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = grd;
-    ctx.beginPath(); ctx.arc(cx, cy, r * 1.4, 0, Math.PI * 2); ctx.fill();
+    var glow2 = ctx.createRadialGradient(W * 0.18, H * 0.8, 30, W * 0.18, H * 0.8, 480);
+    glow2.addColorStop(0, "rgba(255,91,138,0.40)");
+    glow2.addColorStop(1, "rgba(255,91,138,0)");
+    ctx.fillStyle = glow2;
+    ctx.fillRect(0, 0, W, H);
 
-    ctx.fillStyle = "#0a1430";
-    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.04)";
+    ctx.lineWidth = 1;
+    for (var x = 0; x <= W; x += 60) line(ctx, x, 0, x, H);
+    for (var y = 0; y <= H; y += 60) line(ctx, 0, y, W, y);
 
-    ctx.strokeStyle = "rgba(120,160,255,0.35)";
+    ctx.strokeStyle = "rgba(255,255,255,0.10)";
+    ctx.lineWidth = 2;
+    roundRect(ctx, 12, 12, W - 24, H - 24, 28); ctx.stroke();
+
+    drawLogo(ctx, 50, 56);
+
+    ctx.fillStyle = "rgba(255,255,255,0.55)";
+    ctx.font = "600 22px -apple-system, 'Hiragino Sans', sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillText("mirror.world  ·  3 分の自己分析", W - 50, 78);
+
+    ctx.textAlign = "left";
+    ctx.fillStyle = "rgba(255,255,255,0.6)";
+    ctx.font = "600 22px -apple-system, 'Hiragino Sans', sans-serif";
+    ctx.fillText("YOUR TITLE", 60, 200);
+
+    ctx.fillStyle = "#ffffff";
+    var name = (result && result.title && result.title.name) || "唯一の存在";
+    fitText(ctx, name, 60, 286, W - 120, 76, 56);
+
+    var tag = (result && result.title && result.title.tagline) || "";
+    ctx.fillStyle = withAlpha(color, 1);
+    ctx.font = "700 30px -apple-system, 'Hiragino Sans', sans-serif";
+    ctx.fillText(tag, 60, 340);
+
+    ctx.strokeStyle = "rgba(255,255,255,0.15)";
+    line(ctx, 60, 380, W - 60, 380);
+
+    ctx.fillStyle = "rgba(255,255,255,0.55)";
+    ctx.font = "600 22px -apple-system, 'Hiragino Sans', sans-serif";
+    ctx.fillText("世界で同じ性格の人は", 60, 430);
+
+    var oneIn = (result && result.rarity && result.rarity.oneIn) || 1;
+    var worldCount = (result && result.rarity && result.rarity.worldCount) || 1;
+    var rarityBig = oneIn.toLocaleString("en-US") + " 人に 1 人";
+
+    ctx.fillStyle = "#ffd166";
+    ctx.font = "900 78px -apple-system, 'Hiragino Sans', sans-serif";
+    ctx.fillText(rarityBig, 60, 510);
+
+    ctx.fillStyle = "rgba(255,255,255,0.6)";
+    ctx.font = "600 22px -apple-system, 'Hiragino Sans', sans-serif";
+    ctx.fillText("世界で約 " + worldCount.toLocaleString("en-US") + " 人", 60, 545);
+
+    var code = (result && result.code) || "";
+    ctx.fillStyle = withAlpha(color, 0.20);
+    roundRect(ctx, W - 280, H - 110, 220, 56, 18); ctx.fill();
+    ctx.strokeStyle = withAlpha(color, 0.55);
     ctx.lineWidth = 1.5;
-    for (let i = 0; i < 5; i++) {
-      ctx.beginPath();
-      ctx.ellipse(cx, cy, r, r * (0.35 + i * 0.12), 0, 0, Math.PI * 2);
-      ctx.stroke();
+    roundRect(ctx, W - 280, H - 110, 220, 56, 18); ctx.stroke();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "800 26px ui-monospace, 'SFMono-Regular', monospace";
+    ctx.textAlign = "center";
+    ctx.fillText(code, W - 170, H - 73);
+
+    ctx.textAlign = "left";
+    ctx.fillStyle = "rgba(255,255,255,0.45)";
+    ctx.font = "600 22px -apple-system, 'Hiragino Sans', sans-serif";
+    ctx.fillText("guttyanneruuuuuu.github.io/service10/", 60, H - 70);
+  }
+
+  function drawLogo(ctx, x, y) {
+    var grad = null;
+    if (ctx.createConicGradient) {
+      try {
+        grad = ctx.createConicGradient((-Math.PI * 2) / 3, x + 14, y - 4);
+        grad.addColorStop(0, "#ff5b8a");
+        grad.addColorStop(0.33, "#7c5cff");
+        grad.addColorStop(0.66, "#3da6ff");
+        grad.addColorStop(1, "#ff5b8a");
+      } catch (_) { grad = null; }
     }
-    for (let a = 0; a < Math.PI; a += Math.PI / 6) {
-      ctx.beginPath();
-      ctx.ellipse(cx, cy, r * Math.sin(a), r, 0, 0, Math.PI * 2);
-      ctx.stroke();
+    ctx.fillStyle = grad || "#7c5cff";
+    ctx.beginPath(); ctx.arc(x + 14, y - 4, 14, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.arc(x + 10, y - 8, 4, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "900 28px -apple-system, 'Hiragino Sans', sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("Mirror.world", x + 38, y + 5);
+  }
+
+  function fitText(ctx, text, x, y, maxW, baseSize, minSize) {
+    var size = baseSize;
+    ctx.font = "900 " + size + "px -apple-system, 'Hiragino Sans', sans-serif";
+    while (ctx.measureText(text).width > maxW && size > minSize) {
+      size -= 2;
+      ctx.font = "900 " + size + "px -apple-system, 'Hiragino Sans', sans-serif";
     }
+    ctx.fillText(text, x, y);
+  }
 
-    const px = cx + r * 0.15, py = cy - r * 0.25;
-    const dropGrd = ctx.createRadialGradient(px, py, 0, px, py, 80);
-    dropGrd.addColorStop(0, emo.color);
-    dropGrd.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = dropGrd;
-    ctx.beginPath(); ctx.arc(px, py, 80, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = emo.color;
-    ctx.beginPath(); ctx.arc(px, py, 12, 0, Math.PI * 2); ctx.fill();
+  function line(ctx, x1, y1, x2, y2) {
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  }
 
-    ctx.fillStyle = "#5ae0e0";
-    ctx.font = "700 22px Inter, sans-serif";
-    ctx.textBaseline = "top";
-    ctx.fillText("● PULSE EARTH", 60, 56);
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
 
-    ctx.fillStyle = "#eef1ff";
-    ctx.font = "900 64px 'Zen Kaku Gothic New', sans-serif";
-    ctx.fillText("世界の今、", 60, 130);
-    ctx.fillText("地球が脈打つ。", 60, 210);
+  function withAlpha(hex, a) {
+    if (!hex) return "rgba(124,92,255," + a + ")";
+    if (hex[0] !== "#") return hex;
+    var s = hex.slice(1);
+    if (s.length === 3) s = s.split("").map(function (c) { return c + c; }).join("");
+    var n = parseInt(s, 16);
+    var r = (n >> 16) & 255, gn = (n >> 8) & 255, b = n & 255;
+    return "rgba(" + r + "," + gn + "," + b + "," + a + ")";
+  }
 
-    ctx.font = "120px 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif";
-    ctx.fillText(emo.face, 60, 290);
+  function download(canvas, filename) {
+    try {
+      var url = canvas.toDataURL("image/png");
+      var a = document.createElement("a");
+      a.href = url; a.download = filename || "mirror-world.png";
+      document.body.appendChild(a); a.click(); a.remove();
+    } catch (e) { console.warn("download failed", e); }
+  }
 
-    ctx.fillStyle = "#b6baca";
-    ctx.font = "500 26px 'Zen Kaku Gothic New', sans-serif";
-    ctx.fillText("from " + place + " — " + emo.label, 60, 430);
-
-    if (message) {
-      ctx.fillStyle = "#eef1ff";
-      ctx.font = "600 28px 'Zen Kaku Gothic New', sans-serif";
-      const text = message.length > 28 ? message.slice(0, 28) + "…" : message;
-      ctx.fillText("「" + text + "」", 60, 470);
-    }
-
-    ctx.fillStyle = "#7a7f93";
-    ctx.font = "500 20px Inter, sans-serif";
-    ctx.fillText("今日 " + totalToday.toLocaleString() + " 個の鼓動が降った", 60, 540);
-
-    ctx.fillStyle = "#5ae0e0";
-    ctx.font = "700 20px Inter, sans-serif";
-    ctx.fillText("guttyanneruuuuuu.github.io/service10", 60, 580);
-  };
-
-  Share.toBlob = (canvas) => new Promise((res) => canvas.toBlob(res, "image/png", 0.92));
-
-  g.Share = Share;
+  g.SHARE = { draw: draw, download: download };
 })(window);
