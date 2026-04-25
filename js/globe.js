@@ -1,310 +1,303 @@
-/* Pulse Earth — Three.js globe with emotion drops. */
+/* Pulse Earth — 3D globe with Three.js
+ * Procedural dotted Earth (no external textures), pulse meteors + ripple rings.
+ */
 (function (g) {
   "use strict";
-  const C = g.PULSE_CONFIG;
 
-  // Continent outlines (rough closed loops [lon, lat]) — kept tiny on purpose.
-  const CONTINENT_LOOPS = [
-    [[-168,66],[-160,71],[-140,70],[-110,72],[-90,75],[-75,78],[-60,82],[-48,79],[-30,82],[-25,72],[-50,60],[-65,52],[-70,45],[-80,32],[-85,30],[-90,29],[-97,26],[-105,22],[-110,23],[-117,32],[-122,37],[-125,49],[-132,55],[-140,60],[-152,60],[-165,55],[-168,66]],
-    [[-92,16],[-85,15],[-78,9],[-72,11],[-66,11],[-58,5],[-52,4],[-44,-2],[-39,-9],[-37,-11],[-39,-22],[-49,-25],[-55,-34],[-62,-39],[-67,-46],[-70,-54],[-74,-45],[-72,-35],[-75,-15],[-80,-5],[-79,4],[-83,8],[-88,15],[-92,16]],
-    [[-10,36],[-5,43],[3,43],[10,40],[18,40],[30,40],[40,42],[55,40],[65,42],[75,40],[90,42],[100,38],[112,32],[120,28],[122,32],[127,42],[132,46],[140,52],[150,60],[160,68],[170,72],[180,72],[180,80],[140,80],[100,80],[70,80],[40,80],[10,72],[0,68],[5,60],[12,55],[15,52],[20,52],[25,55],[28,56],[30,60],[28,55],[20,48],[18,42],[12,40],[6,38],[-2,36],[-10,36]],
-    [[-17,14],[-15,20],[-7,33],[10,32],[20,30],[30,30],[35,22],[40,12],[42,6],[40,-3],[36,-12],[32,-22],[25,-30],[18,-34],[12,-30],[8,-20],[5,-12],[-2,-2],[-10,4],[-15,8],[-17,14]],
-    [[114,-22],[122,-18],[130,-12],[140,-12],[145,-15],[148,-20],[152,-25],[150,-32],[145,-38],[138,-37],[132,-32],[125,-32],[120,-34],[115,-34],[114,-22]],
-    [[-50,82],[-22,82],[-12,76],[-22,68],[-40,60],[-52,68],[-55,75],[-50,82]]
-  ];
+  const Globe = {
+    el: null, scene: null, camera: null, renderer: null,
+    earth: null, dots: null, root: null,
+    pulses: [],
+    autoSpin: 0.00008,
+    paused: false,
+    _lastT: 0,
 
-  class Globe {
-    constructor(canvas) {
-      this.canvas = canvas;
-      this.scene = new THREE.Scene();
-      this.scene.background = null;
-
+    init(canvas) {
+      this.el = canvas;
       const w = canvas.clientWidth || innerWidth;
       const h = canvas.clientHeight || innerHeight;
-      this.camera = new THREE.PerspectiveCamera(40, w / h, 0.1, 100);
-      this.camera.position.set(0, 0, 4.6);
 
-      this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
+      this.scene = new THREE.Scene();
+      this.scene.fog = new THREE.FogExp2(0x000814, 0.018);
+
+      this.camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 1000);
+      this.camera.position.set(0, 0, 18);
+
+      this.renderer = new THREE.WebGLRenderer({
+        canvas, antialias: true, alpha: true, powerPreference: "high-performance"
+      });
       this.renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
       this.renderer.setSize(w, h, false);
       this.renderer.setClearColor(0x000000, 0);
 
-      this.root = new THREE.Group();
-      this.scene.add(this.root);
-      this.globeGroup = new THREE.Group();
-      this.root.add(this.globeGroup);
+      const amb = new THREE.AmbientLight(0x9bb6ff, 0.35);
+      const key = new THREE.DirectionalLight(0xffffff, 0.9);
+      key.position.set(5, 4, 5);
+      this.scene.add(amb, key);
 
-      this.R = 1.5;
-      this.atmosphereR = 1.62;
-
-      this._makeStars();
-      this._makeGlobe();
-      this._makeContinents();
-      this._makeAtmosphere();
-
-      this._auto = { x: 0.0008, y: 0 };
-      this._rot = { x: 0.4, y: -0.6 };
-      this._target = { x: this._rot.x, y: this._rot.y };
-      this._dragging = false;
-      this._lastP = null;
-      this._zoom = 1.0;
-
-      this._bindInputs();
-
-      this.pulses = [];
-
-      this._onResize = this._onResize.bind(this);
-      window.addEventListener("resize", this._onResize);
-
-      this._tick = this._tick.bind(this);
-      this._lastT = performance.now();
-      requestAnimationFrame(this._tick);
-    }
-
-    _makeStars() {
-      const N = 1200;
-      const geo = new THREE.BufferGeometry();
-      const pos = new Float32Array(N * 3);
-      for (let i = 0; i < N; i++) {
-        const r = 30 + Math.random() * 30;
-        const t = Math.random() * Math.PI * 2;
-        const u = Math.random() * 2 - 1;
-        const s = Math.sqrt(1 - u * u);
-        pos[i*3]   = r * s * Math.cos(t);
-        pos[i*3+1] = r * u;
-        pos[i*3+2] = r * s * Math.sin(t);
-      }
-      geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-      const mat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.06, sizeAttenuation: true, transparent: true, opacity: 0.9 });
-      this.scene.add(new THREE.Points(geo, mat));
-    }
-
-    _makeGlobe() {
-      const geo = new THREE.SphereGeometry(this.R, 64, 48);
-      const mat = new THREE.MeshBasicMaterial({ color: 0x0a1430 });
-      const mesh = new THREE.Mesh(geo, mat);
-      this.globeGroup.add(mesh);
-
-      const gridMat = new THREE.LineBasicMaterial({ color: 0x1a2752, transparent: true, opacity: 0.55 });
-      for (let lon = -180; lon < 180; lon += 30) {
-        const pts = [];
-        for (let lat = -90; lat <= 90; lat += 3) {
-          const v = U.latLonToVec3(lat, lon, this.R * 1.001);
-          pts.push(new THREE.Vector3(v.x, v.y, v.z));
-        }
-        const g = new THREE.BufferGeometry().setFromPoints(pts);
-        this.globeGroup.add(new THREE.Line(g, gridMat));
-      }
-      for (let lat = -60; lat <= 60; lat += 30) {
-        const pts = [];
-        for (let lon = -180; lon <= 180; lon += 3) {
-          const v = U.latLonToVec3(lat, lon, this.R * 1.001);
-          pts.push(new THREE.Vector3(v.x, v.y, v.z));
-        }
-        const g = new THREE.BufferGeometry().setFromPoints(pts);
-        this.globeGroup.add(new THREE.Line(g, gridMat));
-      }
-    }
-
-    _makeContinents() {
-      const mat = new THREE.LineBasicMaterial({ color: 0x4a6cff, transparent: true, opacity: 0.85 });
-      const matGlow = new THREE.LineBasicMaterial({ color: 0x7fb2ff, transparent: true, opacity: 0.45 });
-
-      for (const loop of CONTINENT_LOOPS) {
-        const pts = [];
-        for (const [lon, lat] of loop) {
-          const v = U.latLonToVec3(lat, lon, this.R * 1.005);
-          pts.push(new THREE.Vector3(v.x, v.y, v.z));
-        }
-        const geo = new THREE.BufferGeometry().setFromPoints(pts);
-        const line = new THREE.Line(geo, mat);
-        const glow = new THREE.Line(geo, matGlow);
-        glow.scale.setScalar(1.005);
-        this.globeGroup.add(line);
-        this.globeGroup.add(glow);
-      }
-    }
-
-    _makeAtmosphere() {
-      const geo = new THREE.SphereGeometry(this.atmosphereR, 64, 48);
-      const mat = new THREE.ShaderMaterial({
-        transparent: true,
-        side: THREE.BackSide,
-        depthWrite: false,
-        uniforms: {
-          uColor: { value: new THREE.Color(0x6fa8ff) },
-          uPower: { value: 2.2 },
-          uIntensity: { value: 0.9 }
-        },
-        vertexShader: [
-          "varying vec3 vNormal;",
-          "varying vec3 vPos;",
-          "void main() {",
-          "  vNormal = normalize(normalMatrix * normal);",
-          "  vec4 mv = modelViewMatrix * vec4(position, 1.0);",
-          "  vPos = mv.xyz;",
-          "  gl_Position = projectionMatrix * mv;",
-          "}"
-        ].join("\n"),
-        fragmentShader: [
-          "varying vec3 vNormal;",
-          "varying vec3 vPos;",
-          "uniform vec3 uColor;",
-          "uniform float uPower;",
-          "uniform float uIntensity;",
-          "void main() {",
-          "  vec3 viewDir = normalize(-vPos);",
-          "  float fres = pow(1.0 - max(dot(vNormal, viewDir), 0.0), uPower);",
-          "  gl_FragColor = vec4(uColor, fres * uIntensity);",
-          "}"
-        ].join("\n")
+      // halo
+      const haloGeo = new THREE.SphereGeometry(7.6, 64, 64);
+      const haloMat = new THREE.ShaderMaterial({
+        transparent: true, side: THREE.BackSide, depthWrite: false,
+        uniforms: { c: { value: new THREE.Color(0x5ae0e0) }, p: { value: 4.5 } },
+        vertexShader: "varying vec3 vN;void main(){vN=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
+        fragmentShader: "uniform vec3 c;uniform float p;varying vec3 vN;void main(){float a=pow(0.65-dot(vN,vec3(0,0,1.0)),p);gl_FragColor=vec4(c,a*0.85);}"
       });
-      this.atmo = new THREE.Mesh(geo, mat);
-      this.globeGroup.add(this.atmo);
-    }
+      const halo = new THREE.Mesh(haloGeo, haloMat);
 
-    _bindInputs() {
-      const c = this.canvas;
-      const onDown = (x, y) => { this._dragging = true; this._lastP = { x, y }; };
-      const onMove = (x, y) => {
-        if (!this._dragging || !this._lastP) return;
-        const dx = (x - this._lastP.x) / innerWidth;
-        const dy = (y - this._lastP.y) / innerHeight;
-        this._target.y += dx * 4;
-        this._target.x = U.clamp(this._target.x + dy * 3, -1.2, 1.2);
-        this._lastP = { x, y };
-      };
-      const onUp = () => { this._dragging = false; this._lastP = null; };
+      const earthGeo = new THREE.SphereGeometry(7, 64, 64);
+      const earthMat = new THREE.MeshPhongMaterial({
+        color: 0x05182f, emissive: 0x07112a, shininess: 20,
+        specular: 0x123456, transparent: true, opacity: 0.95
+      });
+      this.earth = new THREE.Mesh(earthGeo, earthMat);
 
-      c.addEventListener("mousedown", (e) => { e.preventDefault(); onDown(e.clientX, e.clientY); });
-      window.addEventListener("mousemove", (e) => onMove(e.clientX, e.clientY));
-      window.addEventListener("mouseup", onUp);
-      c.addEventListener("touchstart", (e) => { if (e.touches[0]) onDown(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
-      c.addEventListener("touchmove",  (e) => { if (e.touches[0]) onMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
-      c.addEventListener("touchend", onUp, { passive: true });
+      this._buildDots();
 
-      c.addEventListener("wheel", (e) => {
-        e.preventDefault();
-        const d = Math.sign(e.deltaY);
-        this._zoom = U.clamp(this._zoom + d * 0.06, 0.7, 1.6);
-      }, { passive: false });
-    }
+      this.root = new THREE.Group();
+      this.root.add(this.earth);
+      this.root.add(this.dots);
+      this.scene.add(halo);
+      this.scene.add(this.root);
 
-    _onResize() {
-      const w = this.canvas.clientWidth || innerWidth;
-      const h = this.canvas.clientHeight || innerHeight;
+      this.root.rotation.x = -0.32;
+      this.root.rotation.y = -1.2;
+
+      this._bindControls();
+      addEventListener("resize", () => this._resize());
+
+      this._lastT = performance.now();
+      this._loop = this._loop.bind(this);
+      requestAnimationFrame(this._loop);
+    },
+
+    _resize() {
+      const w = this.el.clientWidth || innerWidth;
+      const h = this.el.clientHeight || innerHeight;
       this.camera.aspect = w / h;
       this.camera.updateProjectionMatrix();
       this.renderer.setSize(w, h, false);
-    }
+    },
 
-    addPulse({ lat, lon, color, big = false }) {
-      const target = U.latLonToVec3(lat, lon, this.R);
-      const dirN = new THREE.Vector3(target.x, target.y, target.z).normalize();
+    _buildDots() {
+      const N = 9000;
+      const positions = [];
+      const colors = [];
+      const colA = new THREE.Color(0x5ae0e0);
+      const colB = new THREE.Color(0xb58cff);
 
-      const head = new THREE.Mesh(
-        new THREE.SphereGeometry(big ? 0.04 : 0.025, 12, 12),
-        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 1 })
-      );
-      const tailLen = big ? 0.6 : 0.4;
-      const tailGeo = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(0, 0, tailLen)
-      ]);
-      const tailMat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.7 });
-      const tail = new THREE.Line(tailGeo, tailMat);
-      const dropGroup = new THREE.Group();
-      dropGroup.add(head);
-      dropGroup.add(tail);
-      const startDist = 1.6;
-      const startPos = dirN.clone().multiplyScalar(this.R + startDist);
-      dropGroup.position.copy(startPos);
-      dropGroup.lookAt(0, 0, 0);
-      this.globeGroup.add(dropGroup);
+      for (let i = 0; i < N; i++) {
+        const t = i / N;
+        const phi = Math.acos(1 - 2 * t);
+        const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+        const sinPhi = Math.sin(phi);
+        const x = sinPhi * Math.cos(theta);
+        const y = Math.cos(phi);
+        const z = sinPhi * Math.sin(theta);
+        const lat = 90 - (phi * 180 / Math.PI);
+        const lon = ((theta * 180 / Math.PI) % 360 + 540) % 360 - 180;
 
-      const ringGeo = new THREE.RingGeometry(0.015, 0.022, 48);
-      const ringMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthWrite: false });
+        if (!isLand(lat, lon)) continue;
+
+        const r = 7.04;
+        positions.push(x * r, y * r, z * r);
+        const mix = 0.5 + 0.5 * Math.sin(lat * 0.06 + lon * 0.02);
+        const c = colA.clone().lerp(colB, mix);
+        colors.push(c.r, c.g, c.b);
+      }
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+      geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+
+      const mat = new THREE.PointsMaterial({
+        size: 0.075, vertexColors: true, transparent: true, opacity: 0.95,
+        depthWrite: false, sizeAttenuation: true,
+        blending: THREE.AdditiveBlending,
+        map: makeDotTexture()
+      });
+      this.dots = new THREE.Points(geo, mat);
+    },
+
+    _bindControls() {
+      const el = this.el;
+      let down = false, lx = 0, ly = 0;
+      el.addEventListener("pointerdown", (e) => {
+        down = true; lx = e.clientX; ly = e.clientY;
+        try { el.setPointerCapture(e.pointerId); } catch (err) {}
+      });
+      el.addEventListener("pointerup", (e) => {
+        down = false;
+        try { el.releasePointerCapture(e.pointerId); } catch (err) {}
+      });
+      el.addEventListener("pointercancel", () => { down = false; });
+      el.addEventListener("pointermove", (e) => {
+        if (!down) return;
+        const dx = (e.clientX - lx) * 0.005;
+        const dy = (e.clientY - ly) * 0.005;
+        this.root.rotation.y += dx;
+        this.root.rotation.x = U.clamp(this.root.rotation.x + dy, -1.2, 1.2);
+        lx = e.clientX; ly = e.clientY;
+      });
+      el.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        this.camera.position.z = U.clamp(this.camera.position.z + e.deltaY * 0.01, 11, 28);
+      }, { passive: false });
+
+      let pinchStart = 0, startZ = 0;
+      el.addEventListener("touchstart", (e) => {
+        if (e.touches.length === 2) {
+          pinchStart = touchDist(e); startZ = this.camera.position.z;
+        }
+      });
+      el.addEventListener("touchmove", (e) => {
+        if (e.touches.length === 2 && pinchStart) {
+          const d = touchDist(e);
+          this.camera.position.z = U.clamp(startZ * (pinchStart / d), 11, 28);
+        }
+      }, { passive: true });
+      function touchDist(e) {
+        const a = e.touches[0], b = e.touches[1];
+        return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+      }
+    },
+
+    spawnPulse(lat, lon, color, opts) {
+      opts = opts || {};
+      const r = 7.05;
+      const pos = U.latLonToVec3(lat, lon, r);
+      const v = new THREE.Vector3(pos.x, pos.y, pos.z);
+      const col = new THREE.Color(color);
+
+      const dotMat = new THREE.SpriteMaterial({
+        map: makeDotTexture(),
+        color: col,
+        blending: THREE.AdditiveBlending,
+        transparent: true,
+        depthWrite: false
+      });
+      const sprite = new THREE.Sprite(dotMat);
+      sprite.scale.set(0.6, 0.6, 0.6);
+      sprite.position.copy(v);
+
+      const ringGeo = new THREE.RingGeometry(0.05, 0.07, 32);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: col, transparent: true, opacity: 0.9,
+        side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending
+      });
       const ring = new THREE.Mesh(ringGeo, ringMat);
-      ring.position.copy(dirN).multiplyScalar(this.R * 1.005);
-      ring.lookAt(dirN.clone().multiplyScalar(this.R * 2));
-      this.globeGroup.add(ring);
-      ring.visible = false;
+      ring.position.copy(v);
+      const outward = v.clone().normalize();
+      ring.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), outward);
 
-      const pillarGeo = new THREE.BufferGeometry().setFromPoints([
-        dirN.clone().multiplyScalar(this.R),
-        dirN.clone().multiplyScalar(this.R + (big ? 0.55 : 0.35))
-      ]);
-      const pillarMat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.0 });
-      const pillar = new THREE.Line(pillarGeo, pillarMat);
-      this.globeGroup.add(pillar);
+      const beamGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.6, 12, 1, true);
+      const beamMat = new THREE.MeshBasicMaterial({
+        color: col, transparent: true, opacity: 0.7, depthWrite: false, blending: THREE.AdditiveBlending
+      });
+      const beam = new THREE.Mesh(beamGeo, beamMat);
+      beam.position.copy(v.clone().add(outward.clone().multiplyScalar(0.3)));
+      beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), outward);
+
+      this.root.add(sprite); this.root.add(ring); this.root.add(beam);
 
       this.pulses.push({
-        phase: "fall", t: 0,
-        head, tail: tailMat, dropGroup,
-        ring, ringMat,
-        pillar, pillarMat,
-        dirN, color: new THREE.Color(color), big
+        sprite: sprite, ring: ring, beam: beam,
+        ttl: opts.ttl || 2200,
+        born: performance.now(),
+        big: !!opts.big
       });
-    }
+    },
 
-    _stepPulses(dt) {
-      const remove = [];
-      for (let i = 0; i < this.pulses.length; i++) {
+    _loop(now) {
+      const dt = now - this._lastT; this._lastT = now;
+
+      if (!this.paused) this.root.rotation.y += this.autoSpin * dt;
+
+      for (let i = this.pulses.length - 1; i >= 0; i--) {
         const p = this.pulses[i];
-        if (p.phase === "fall") {
-          p.t += dt;
-          const dur = 0.7;
-          const k = Math.min(1, p.t / dur);
-          const ek = 1 - Math.pow(1 - k, 3);
-          const dist = U.lerp(1.6, 0.0, ek);
-          p.dropGroup.position.copy(p.dirN.clone().multiplyScalar(this.R + dist));
-          p.dropGroup.lookAt(0, 0, 0);
-          if (k >= 1) {
-            this.globeGroup.remove(p.dropGroup);
-            p.head.material.dispose(); p.head.geometry.dispose();
-            p.ring.visible = true;
-            p.phase = "ring"; p.t = 0;
-          }
-        } else if (p.phase === "ring") {
-          p.t += dt;
-          const dur = p.big ? 1.4 : 1.0;
-          const k = Math.min(1, p.t / dur);
-          const sc = U.lerp(1, p.big ? 8 : 5, k);
-          p.ring.scale.setScalar(sc);
-          p.ringMat.opacity = (1 - k) * 0.9;
-          p.pillarMat.opacity = Math.sin(k * Math.PI) * (p.big ? 0.9 : 0.6);
-          if (k >= 1) {
-            this.globeGroup.remove(p.ring); this.globeGroup.remove(p.pillar);
-            p.ring.geometry.dispose(); p.ringMat.dispose();
-            p.pillar.geometry.dispose(); p.pillarMat.dispose();
-            remove.push(i);
-          }
+        const age = now - p.born;
+        const k = age / p.ttl;
+        if (k >= 1) {
+          this.root.remove(p.sprite); this.root.remove(p.ring); this.root.remove(p.beam);
+          try { p.sprite.material.dispose(); p.ring.material.dispose(); p.beam.material.dispose(); } catch (e) {}
+          try { p.ring.geometry.dispose(); p.beam.geometry.dispose(); } catch (e) {}
+          this.pulses.splice(i, 1);
+          continue;
         }
+        const s = p.big ? 1.6 : 1.0;
+        const sc = (1 - k) * 0.7 * s + 0.3;
+        p.sprite.scale.setScalar(sc);
+        p.sprite.material.opacity = 1 - k;
+
+        const ringScale = 1 + k * (p.big ? 22 : 14);
+        p.ring.scale.setScalar(ringScale);
+        p.ring.material.opacity = (1 - k) * 0.9;
+
+        const beamH = 0.6 + k * (p.big ? 1.8 : 1.0);
+        p.beam.scale.set(1, beamH, 1);
+        p.beam.material.opacity = (1 - k) * 0.7;
       }
-      for (let j = remove.length - 1; j >= 0; j--) this.pulses.splice(remove[j], 1);
-    }
-
-    _tick(now) {
-      const dt = Math.min(0.05, (now - this._lastT) / 1000);
-      this._lastT = now;
-
-      this._rot.x = U.lerp(this._rot.x, this._target.x, 0.12);
-      this._rot.y = U.lerp(this._rot.y, this._target.y, 0.12);
-      if (!this._dragging) this._target.y += this._auto.x;
-
-      this.globeGroup.rotation.x = this._rot.x;
-      this.globeGroup.rotation.y = this._rot.y;
-
-      this.camera.position.z = U.lerp(this.camera.position.z, 4.6 / this._zoom, 0.1);
-
-      this._stepPulses(dt);
-
-      this.atmo.material.uniforms.uIntensity.value = 0.85 + Math.sin(now * 0.001) * 0.08;
 
       this.renderer.render(this.scene, this.camera);
-      requestAnimationFrame(this._tick);
+      requestAnimationFrame(this._loop);
+    },
+
+    setPaused(v) { this.paused = !!v; }
+  };
+
+  // ---- procedural land mask ----
+  function isLand(lat, lon) {
+    var phi = lat, lam = lon;
+    if (phi < -62) return Math.random() < 0.7;
+    if (inBox(phi, lam, 60, 84, -73, -12)) return ellipseGuard(phi, lam, 75, -42, 9, 18, 0.85);
+    if (inBox(phi, lam, 14, 72, -168, -52)) {
+      if (inBox(phi, lam, 18, 30, -98, -80)) return Math.random() < 0.05;
+      if (inBox(phi, lam, 8, 24, -88, -60)) return Math.random() < 0.18;
+      return ellipseGuard(phi, lam, 50, -100, 22, 36, 0.78);
     }
+    if (inBox(phi, lam, -55, 13, -82, -34)) return ellipseGuard(phi, lam, -20, -60, 35, 18, 0.78);
+    if (inBox(phi, lam, 36, 71, -10, 60)) {
+      if (inBox(phi, lam, 30, 45, -5, 40)) return Math.random() < 0.55;
+      return ellipseGuard(phi, lam, 54, 18, 18, 30, 0.8);
+    }
+    if (inBox(phi, lam, -35, 37, -18, 52)) return ellipseGuard(phi, lam, 2, 18, 36, 22, 0.8);
+    if (inBox(phi, lam, 12, 42, 35, 65))   return ellipseGuard(phi, lam, 27, 50, 16, 16, 0.7);
+    if (inBox(phi, lam, 42, 78, 25, 180))  return ellipseGuard(phi, lam, 60, 100, 20, 70, 0.78);
+    if (inBox(phi, lam, -12, 55, 65, 145)) return ellipseGuard(phi, lam, 25, 100, 32, 30, 0.72);
+    if (inBox(phi, lam, 30, 46, 128, 146)) return Math.random() < 0.65;
+    if (inBox(phi, lam, -11, 20, 95, 140)) return Math.random() < 0.35;
+    if (inBox(phi, lam, -40, -10, 112, 154))return ellipseGuard(phi, lam, -25, 134, 13, 20, 0.85);
+    if (inBox(phi, lam, -47, -34, 165, 179))return Math.random() < 0.5;
+    if (inBox(phi, lam, 49, 60, -11, 2))    return Math.random() < 0.6;
+    if (inBox(phi, lam, -26, -12, 43, 51))  return Math.random() < 0.6;
+    return false;
+  }
+  function inBox(p, l, p0, p1, l0, l1) { return p >= p0 && p <= p1 && l >= l0 && l <= l1; }
+  function ellipseGuard(p, l, cp, cl, rp, rl, density) {
+    var dx = (l - cl) / rl; var dy = (p - cp) / rp;
+    var d = dx*dx + dy*dy;
+    if (d > 1.05) return false;
+    var noise = 0.85 - d * 0.45;
+    return Math.random() < density * noise + 0.05;
   }
 
-  g.PulseGlobe = Globe;
+  var _dotTex = null;
+  function makeDotTexture() {
+    if (_dotTex) return _dotTex;
+    var size = 64;
+    var c = document.createElement("canvas");
+    c.width = c.height = size;
+    var ctx = c.getContext("2d");
+    var grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+    grad.addColorStop(0, "rgba(255,255,255,1)");
+    grad.addColorStop(0.4, "rgba(255,255,255,0.55)");
+    grad.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, size, size);
+    _dotTex = new THREE.CanvasTexture(c);
+    _dotTex.minFilter = THREE.LinearFilter;
+    return _dotTex;
+  }
+
+  g.Globe = Globe;
 })(window);

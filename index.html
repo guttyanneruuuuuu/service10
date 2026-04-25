@@ -3,36 +3,34 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<meta name="theme-color" content="#0a0a14" />
+<meta name="theme-color" content="#000814" />
 <meta name="color-scheme" content="dark" />
 
-<title>Echo — 未来に届くタイムカプセルSNS</title>
-<meta name="description" content="未来の日付に開封されるメッセージを世界に投稿。1日後、1年後、10年後。あなたの今が、未来で誰かの胸を震わせる。完全無料・登録不要で投稿できる新しい非同期SNS。" />
-<meta name="keywords" content="タイムカプセル,SNS,未来,メッセージ,Echo,非同期,手紙,future,timecapsule" />
-<meta name="author" content="Echo" />
+<title>Pulse Earth — 世界の"今この瞬間"の感情が降り注ぐ地球</title>
+<meta name="description" content="世界中の人がいま何を感じているのか。あなたの今の気持ちを地球に灯し、世界の鼓動と共鳴する。登録不要・完全無料のリアルタイム感情可視化サイト。" />
+<meta name="keywords" content="pulse earth,感情,リアルタイム,地球,可視化,世界,SNS,emotion,realtime,globe" />
 <link rel="canonical" href="https://guttyanneruuuuuu.github.io/service10/" />
 
 <meta property="og:type" content="website" />
-<meta property="og:site_name" content="Echo" />
-<meta property="og:title" content="Echo — 未来に届くタイムカプセルSNS" />
-<meta property="og:description" content="未来の日付に開封されるメッセージを世界に投稿。あなたの「今」が、未来で誰かの心を揺らす。" />
+<meta property="og:site_name" content="Pulse Earth" />
+<meta property="og:title" content="Pulse Earth — 世界の感情がリアルタイムで降り注ぐ地球" />
+<meta property="og:description" content="今この瞬間、世界中の誰かが何を感じているか。地球に灯る光は、あなたと同じ気持ちかもしれない。" />
 <meta property="og:url" content="https://guttyanneruuuuuu.github.io/service10/" />
 <meta property="og:image" content="https://guttyanneruuuuuu.github.io/service10/assets/og/cover.svg" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
-
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Echo — 未来に届くタイムカプセルSNS" />
-<meta name="twitter:description" content="未来の日付に開封されるメッセージを世界に投稿。あなたの「今」が、未来で誰かの心を揺らす。" />
+<meta name="twitter:title" content="Pulse Earth" />
+<meta name="twitter:description" content="世界の今この瞬間の感情が、地球に降り注ぐ。" />
 <meta name="twitter:image" content="https://guttyanneruuuuuu.github.io/service10/assets/og/cover.svg" />
 
-<link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
-<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.svg" />
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.svg" />
 <link rel="manifest" href="manifest.webmanifest" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Serif+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet" />
 
 <link rel="stylesheet" href="css/style.css" />
 
@@ -40,8 +38,8 @@
 {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  "name": "Echo",
-  "description": "未来に届くタイムカプセルSNS。未来の日付に開封されるメッセージを世界に投稿できる。",
+  "name": "Pulse Earth",
+  "description": "世界中の人の今の感情がリアルタイムで降り注ぐ地球可視化サイト",
   "url": "https://guttyanneruuuuuu.github.io/service10/",
   "applicationCategory": "SocialNetworkingApplication",
   "operatingSystem": "Any",
@@ -51,227 +49,140 @@
 </head>
 <body>
 
-<div class="aurora" aria-hidden="true">
-  <div class="aurora__layer aurora__layer--1"></div>
-  <div class="aurora__layer aurora__layer--2"></div>
-  <div class="aurora__layer aurora__layer--3"></div>
-  <div class="aurora__noise"></div>
+<div id="loader" class="loader">
+  <div class="loader__ring"></div>
+  <div class="loader__text">tuning into Earth…</div>
 </div>
 
-<header class="header" id="header">
-  <a href="#/" class="brand" data-route="/">
-    <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true">
-      <defs>
-        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#9b8cff"/>
-          <stop offset="1" stop-color="#5ae0e0"/>
-        </linearGradient>
-      </defs>
-      <circle cx="16" cy="16" r="14" fill="none" stroke="url(#bg)" stroke-width="2"/>
-      <circle cx="16" cy="16" r="9" fill="none" stroke="url(#bg)" stroke-width="1.5" opacity=".7"/>
-      <circle cx="16" cy="16" r="4" fill="url(#bg)"/>
-    </svg>
-    <span class="brand__name">Echo</span>
-  </a>
-
-  <nav class="nav" aria-label="Primary">
-    <a href="#/timeline" data-route="/timeline" class="nav__link">タイムライン</a>
-    <a href="#/compose" data-route="/compose" class="nav__link nav__link--cta">+ 未来へ送る</a>
-  </nav>
+<header class="hud-top">
+  <div class="brand">
+    <span class="brand__dot" aria-hidden="true"></span>
+    <span class="brand__name">PULSE EARTH</span>
+  </div>
+  <div class="live-stats" aria-live="polite">
+    <span class="stat"><span id="statLive">0</span> <em>live now</em></span>
+    <span class="stat"><span id="statTotal">0</span> <em>pulses today</em></span>
+  </div>
+  <button class="icon-btn" id="aboutBtn" aria-label="About">?</button>
 </header>
 
-<main id="app" class="app"></main>
+<div id="stage" class="stage" aria-label="3D globe of world emotions">
+  <canvas id="globe"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+</div>
 
-<template id="view-landing">
-  <section class="hero">
-    <div class="hero__inner">
-      <p class="hero__eyebrow">A new kind of social — async, soulful, slow.</p>
-      <h1 class="hero__title">
-        いまの<span class="grad">想い</span>を、<br />
-        <span class="grad-2">未来</span>へ届けるSNS。
-      </h1>
-      <p class="hero__lead">
-        Echo (エコー) は、未来の日付に「開封」されるメッセージを世界へ投稿できる新しいSNSです。<br />
-        1日後の自分、1年後の恋人、10年後の世界。あなたの<b>今</b>が、未来で誰かの心を揺らす。
-      </p>
-      <div class="hero__cta">
-        <a class="btn btn--primary" href="#/compose">未来へメッセージを送る</a>
-        <a class="btn btn--ghost" href="#/timeline">いま開封中の声を聴く →</a>
-      </div>
-      <div class="hero__counters" id="heroCounters" aria-live="polite">
-        <div class="counter"><div class="counter__num" data-key="sealed">—</div><div class="counter__label">封印中</div></div>
-        <div class="counter"><div class="counter__num" data-key="opened">—</div><div class="counter__label">開封済み</div></div>
-        <div class="counter"><div class="counter__num" data-key="today">—</div><div class="counter__label">今日開く</div></div>
-      </div>
+<div id="streamBar" class="stream-bar" aria-hidden="true"></div>
+
+<section class="hud-bottom">
+  <div class="hud-bottom__inner">
+    <p class="hud-bottom__caption">
+      <span class="caption-eyebrow">いま、どんな気分?</span>
+      <span class="caption-sub">タップで地球にあなたの光が降ります。世界中の誰かが、それを今みている。</span>
+    </p>
+
+    <div class="emo-row" role="radiogroup" aria-label="Choose your emotion">
+      <button class="emo" data-emo="joy"      style="--c:#ffd166" aria-label="嬉しい"><span class="emo__face">😊</span><span class="emo__lab">嬉しい</span></button>
+      <button class="emo" data-emo="love"     style="--c:#ff6b9a" aria-label="愛しい"><span class="emo__face">😍</span><span class="emo__lab">愛しい</span></button>
+      <button class="emo" data-emo="calm"     style="--c:#5ae0e0" aria-label="穏やか"><span class="emo__face">😌</span><span class="emo__lab">穏やか</span></button>
+      <button class="emo" data-emo="sad"      style="--c:#7aa6ff" aria-label="悲しい"><span class="emo__face">😢</span><span class="emo__lab">悲しい</span></button>
+      <button class="emo" data-emo="angry"    style="--c:#ff5a5a" aria-label="怒り"><span class="emo__face">😡</span><span class="emo__lab">怒り</span></button>
+      <button class="emo" data-emo="anxious"  style="--c:#b58cff" aria-label="不安"><span class="emo__face">😰</span><span class="emo__lab">不安</span></button>
+      <button class="emo" data-emo="tired"    style="--c:#9aa1b2" aria-label="疲れた"><span class="emo__face">😴</span><span class="emo__lab">疲れた</span></button>
+      <button class="emo" data-emo="wow"      style="--c:#ff9a3c" aria-label="びっくり"><span class="emo__face">🤯</span><span class="emo__lab">びっくり</span></button>
     </div>
-    <div class="hero__capsules" aria-hidden="true">
-      <div class="cap cap--a">2026.04.25</div>
-      <div class="cap cap--b">2030.01.01</div>
-      <div class="cap cap--c">2027.12.24</div>
-      <div class="cap cap--d">2035.08.15</div>
+
+    <div class="msg-row">
+      <input id="msgInput" type="text" maxlength="80" placeholder="一言そえる (任意・80文字まで)" autocomplete="off" />
+      <span id="msgCount" class="msg-count">0/80</span>
     </div>
-  </section>
 
-  <section class="features">
-    <h2 class="section-title">なぜ Echo なのか</h2>
-    <div class="feat-grid">
-      <article class="feat"><div class="feat__icon">⌛</div><h3>時間がコンテンツを熟成させる</h3><p>投稿は指定した未来の日まで誰にも見えません。時が経つほどに、言葉は重みを増します。</p></article>
-      <article class="feat"><div class="feat__icon">🌏</div><h3>世界がひとつのタイムラインに</h3><p>開封日を迎えた言葉が、世界中から同時に流れ着きます。今日という日が、誰かの未来でした。</p></article>
-      <article class="feat"><div class="feat__icon">🔒</div><h3>完全無料・匿名でOK</h3><p>ログイン不要で投稿可能。鍵付き投稿、特定の人だけが開ける手紙、すべて無料で始められます。</p></article>
-      <article class="feat"><div class="feat__icon">💌</div><h3>未来の自分に手紙を</h3><p>「Future Me」モードで、未来の自分宛てに投稿。指定日にこの端末で過去の自分と再会できます。</p></article>
+    <div class="hud-bottom__foot">
+      <span class="hint" id="locHint">📍 場所を取得中…</span>
+      <button class="btn-ghost" id="heatBtn">🌡 ヒートマップ</button>
+      <button class="btn-ghost" id="shareBtn">↗ シェア</button>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section class="timeline-preview">
-    <div class="section-header">
-      <h2 class="section-title">今日、世界が開いた声</h2>
-      <a href="#/timeline" class="link-arrow">すべて見る →</a>
+<aside class="feed" id="feed" aria-label="Live emotion feed">
+  <header class="feed__head">
+    <span class="feed__title">LIVE FEED</span>
+    <span class="feed__dot"></span>
+  </header>
+  <ul class="feed__list" id="feedList"></ul>
+</aside>
+
+<div class="modal" id="aboutModal" hidden>
+  <div class="modal__back" data-close></div>
+  <div class="modal__panel">
+    <button class="modal__close" data-close aria-label="Close">×</button>
+    <h2 class="modal__title">Pulse Earth とは</h2>
+    <p>世界中の人の<strong>今この瞬間の感情</strong>がリアルタイムで地球に降り注ぐサイトです。</p>
+    <ul class="bullets">
+      <li>感情ボタンを押すと、あなたの位置から光が地球に灯ります。</li>
+      <li>世界中の他の人の光も、同じ地球の上で同時に見えます。</li>
+      <li>登録不要・完全無料・匿名。位置情報はざっくり都市レベルでしか保存されません。</li>
+      <li>24時間で消える儀式です。今日の世界の気持ちは、今日しか見えません。</li>
+    </ul>
+    <p class="muted small">あなたの感情データは個人を特定できる形では保存されません。詳細は <a href="#" id="openPrivacy">プライバシー</a> をご覧ください。</p>
+  </div>
+</div>
+
+<div class="modal" id="shareModal" hidden>
+  <div class="modal__back" data-close></div>
+  <div class="modal__panel">
+    <button class="modal__close" data-close aria-label="Close">×</button>
+    <h2 class="modal__title">この瞬間をシェア</h2>
+    <div id="sharePreview" class="share-preview">
+      <canvas id="shareCanvas" width="1200" height="630"></canvas>
     </div>
-    <div class="post-grid" id="previewGrid"></div>
-  </section>
-
-  <section class="cta-band">
-    <div class="cta-band__inner">
-      <h2>いまの一行が、未来で誰かを救う。</h2>
-      <a class="btn btn--primary btn--lg" href="#/compose">無料で未来へ送る</a>
+    <div class="share-actions">
+      <button class="btn" id="shareDownload">画像を保存</button>
+      <a class="btn btn--primary" id="shareTwitter" target="_blank" rel="noopener">𝕏 でシェア</a>
+      <button class="btn" id="shareCopy">URLをコピー</button>
     </div>
-  </section>
-</template>
+  </div>
+</div>
 
-<template id="view-timeline">
-  <section class="timeline">
-    <header class="timeline__header">
-      <h1 class="page-title">タイムライン</h1>
-      <div class="filters" role="tablist">
-        <button class="chip is-active" data-filter="opened" role="tab">開封済み</button>
-        <button class="chip" data-filter="today" role="tab">今日開く</button>
-        <button class="chip" data-filter="sealed" role="tab">封印中</button>
-      </div>
-    </header>
-    <div class="post-grid" id="timelineGrid"></div>
-    <div id="timelineEmpty" class="empty" hidden>
-      <p>まだ投稿がありません。最初の一通を未来へ。</p>
-      <a class="btn btn--primary" href="#/compose">未来へ送る</a>
-    </div>
-  </section>
-</template>
+<div class="modal" id="heatModal" hidden>
+  <div class="modal__back" data-close></div>
+  <div class="modal__panel modal__panel--wide">
+    <button class="modal__close" data-close aria-label="Close">×</button>
+    <h2 class="modal__title">今日の世界の感情</h2>
+    <div class="heat-summary" id="heatSummary"></div>
+    <div class="heat-bars" id="heatBars"></div>
+    <p class="muted small">過去24時間に集まった鼓動の集計です。データは毎日リフレッシュされます。</p>
+  </div>
+</div>
 
-<template id="view-compose">
-  <section class="compose">
-    <h1 class="page-title">未来へ送る</h1>
-    <form id="composeForm" class="compose__form" novalidate>
-      <div class="field">
-        <label class="field__label">モード</label>
-        <div class="seg">
-          <input type="radio" name="mode" id="mWorld" value="world" checked />
-          <label for="mWorld">🌏 世界へ</label>
-          <input type="radio" name="mode" id="mSelf" value="self" />
-          <label for="mSelf">🪞 未来の自分へ</label>
-          <input type="radio" name="mode" id="mLocked" value="locked" />
-          <label for="mLocked">🔐 合言葉つき</label>
-        </div>
-        <p class="field__hint" data-hint="world">開封日になると、世界のタイムラインに公開されます。</p>
-        <p class="field__hint" data-hint="self" hidden>非公開。指定日にこの端末で再会できます (ローカル保存)。</p>
-        <p class="field__hint" data-hint="locked" hidden>合言葉を知っている人だけが開封できます。世界のタイムラインに「鍵付きカプセル」として表示されます。</p>
-      </div>
-
-      <div class="field">
-        <label class="field__label" for="cTitle">タイトル <span class="opt">(任意)</span></label>
-        <input id="cTitle" name="title" type="text" maxlength="60" placeholder="例: 未来の自分へ" />
-      </div>
-
-      <div class="field">
-        <label class="field__label" for="cBody">本文 <span class="req">必須</span></label>
-        <textarea id="cBody" name="body" maxlength="1000" required rows="8" placeholder="今この瞬間の想い、夢、悩み、何でも。1000文字まで。"></textarea>
-        <div class="field__counter"><span id="bodyCount">0</span>/1000</div>
-      </div>
-
-      <div class="grid-2">
-        <div class="field">
-          <label class="field__label" for="cAuthor">差出人 <span class="opt">(任意)</span></label>
-          <input id="cAuthor" name="author" type="text" maxlength="24" placeholder="匿名" />
-        </div>
-        <div class="field">
-          <label class="field__label" for="cOpenAt">開封日</label>
-          <input id="cOpenAt" name="openAt" type="date" required />
-          <div class="quick-dates">
-            <button type="button" class="chip-mini" data-add="1">+1日</button>
-            <button type="button" class="chip-mini" data-add="7">+1週</button>
-            <button type="button" class="chip-mini" data-add="30">+1ヶ月</button>
-            <button type="button" class="chip-mini" data-add="365">+1年</button>
-            <button type="button" class="chip-mini" data-add="1825">+5年</button>
-            <button type="button" class="chip-mini" data-add="3650">+10年</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="field" data-when="locked" hidden>
-        <label class="field__label" for="cPass">合言葉</label>
-        <input id="cPass" name="pass" type="text" maxlength="40" placeholder="開ける人だけが知っている言葉" />
-        <p class="field__hint">※ 合言葉は端末上でハッシュ化され、原文は送信されません。</p>
-      </div>
-
-      <div class="field">
-        <label class="check">
-          <input id="cAgree" type="checkbox" required />
-          <span>個人情報・他者を傷つける内容を含まないことに同意します。違反する投稿は予告なく削除されます。</span>
-        </label>
-      </div>
-
-      <div class="compose__actions">
-        <button type="submit" class="btn btn--primary btn--lg" id="submitBtn">
-          <span class="btn__label">封をして未来へ送る</span>
-          <span class="btn__spin" hidden></span>
-        </button>
-        <p class="form-error" id="formError" role="alert" hidden></p>
-      </div>
-    </form>
-  </section>
-</template>
-
-<template id="view-post">
-  <section class="postview" id="postViewRoot">
-    <a href="#/timeline" class="back-link">← タイムラインへ戻る</a>
-    <div id="postBody"></div>
-  </section>
-</template>
-
-<template id="view-404">
-  <section class="empty empty--center">
-    <h1 class="page-title">迷子のカプセル</h1>
-    <p>このページは未来でも過去でも見つかりません。</p>
-    <a class="btn btn--primary" href="#/">トップへ戻る</a>
-  </section>
-</template>
+<div class="modal" id="privacyModal" hidden>
+  <div class="modal__back" data-close></div>
+  <div class="modal__panel">
+    <button class="modal__close" data-close aria-label="Close">×</button>
+    <h2 class="modal__title">プライバシー</h2>
+    <ul class="bullets">
+      <li>位置情報は<strong>都市または国レベルに丸めて</strong>保存されます。正確な座標は保存しません。</li>
+      <li>IPアドレスや端末識別子は保存しません。</li>
+      <li>感情とメッセージは24時間でサーバから自動的に消えます。</li>
+      <li>クッキー: ローカル設定とアナリティクスのみ。第三者広告クッキーは使いません。</li>
+    </ul>
+  </div>
+</div>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<footer class="footer">
-  <div class="footer__inner">
-    <div class="footer__brand">
-      <span class="brand__name">Echo</span>
-      <span class="muted">© <span id="year"></span> Echo. All capsules belong to the future.</span>
-    </div>
-    <nav class="footer__nav" aria-label="Footer">
-      <a href="#/about">About</a>
-      <a href="#/terms">利用規約</a>
-      <a href="#/privacy">プライバシー</a>
-      <a href="https://github.com/guttyanneruuuuuu/service10" target="_blank" rel="noopener">GitHub</a>
-    </nav>
-  </div>
-</footer>
-
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics-compat.js"></script>
 
 <script src="js/config.js"></script>
 <script src="js/util.js"></script>
-<script src="js/security.js"></script>
 <script src="js/analytics.js"></script>
+<script src="js/security.js"></script>
 <script src="js/store.js"></script>
-<script src="js/views.js"></script>
-<script src="js/router.js"></script>
+<script src="js/geo.js"></script>
+<script src="js/globe.js"></script>
+<script src="js/share.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
