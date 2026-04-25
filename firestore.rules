@@ -1,0 +1,36 @@
+// Pulse Earth — Firestore security rules
+// Deploy via: firebase deploy --only firestore:rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+
+    function isString(v, max)  { return v is string && v.size() <= max; }
+    function isNum(v, lo, hi)  { return (v is int || v is float) && v >= lo && v <= hi; }
+    function nowMs()           { return request.time.toMillis(); }
+
+    match /pulses/{id} {
+      allow read: if true;
+
+      allow create: if
+        request.resource.data.keys().hasOnly(
+          ['emotion','message','lat','lon','place','source','createdAtMs']
+        )
+        && request.resource.data.emotion in
+            ['joy','love','calm','sad','angry','anxious','tired','wow']
+        && (!('message' in request.resource.data)
+            || isString(request.resource.data.message, 80))
+        && isNum(request.resource.data.lat, -90, 90)
+        && isNum(request.resource.data.lon, -180, 180)
+        && (!('place' in request.resource.data)
+            || isString(request.resource.data.place, 60))
+        && (!('source' in request.resource.data)
+            || isString(request.resource.data.source, 16))
+        && isNum(request.resource.data.createdAtMs,
+                 nowMs() - 60000,
+                 nowMs() + 60000);
+
+      allow update, delete: if false;
+    }
+  }
+}

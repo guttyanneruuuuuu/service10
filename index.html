@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0a0a14" />
+<meta name="color-scheme" content="dark" />
+
+<title>Echo — 未来に届くタイムカプセルSNS</title>
+<meta name="description" content="未来の日付に開封されるメッセージを世界に投稿。1日後、1年後、10年後。あなたの今が、未来で誰かの胸を震わせる。完全無料・登録不要で投稿できる新しい非同期SNS。" />
+<meta name="keywords" content="タイムカプセル,SNS,未来,メッセージ,Echo,非同期,手紙,future,timecapsule" />
+<meta name="author" content="Echo" />
+<link rel="canonical" href="https://guttyanneruuuuuu.github.io/service10/" />
+
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Echo" />
+<meta property="og:title" content="Echo — 未来に届くタイムカプセルSNS" />
+<meta property="og:description" content="未来の日付に開封されるメッセージを世界に投稿。あなたの「今」が、未来で誰かの心を揺らす。" />
+<meta property="og:url" content="https://guttyanneruuuuuu.github.io/service10/" />
+<meta property="og:image" content="https://guttyanneruuuuuu.github.io/service10/assets/og/cover.svg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Echo — 未来に届くタイムカプセルSNS" />
+<meta name="twitter:description" content="未来の日付に開封されるメッセージを世界に投稿。あなたの「今」が、未来で誰かの心を揺らす。" />
+<meta name="twitter:image" content="https://guttyanneruuuuuu.github.io/service10/assets/og/cover.svg" />
+
+<link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.svg" />
+<link rel="manifest" href="manifest.webmanifest" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Serif+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet" />
+
+<link rel="stylesheet" href="css/style.css" />
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Echo",
+  "description": "未来に届くタイムカプセルSNS。未来の日付に開封されるメッセージを世界に投稿できる。",
+  "url": "https://guttyanneruuuuuu.github.io/service10/",
+  "applicationCategory": "SocialNetworkingApplication",
+  "operatingSystem": "Any",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" }
+}
+</script>
+</head>
+<body>
+
+<div class="aurora" aria-hidden="true">
+  <div class="aurora__layer aurora__layer--1"></div>
+  <div class="aurora__layer aurora__layer--2"></div>
+  <div class="aurora__layer aurora__layer--3"></div>
+  <div class="aurora__noise"></div>
+</div>
+
+<header class="header" id="header">
+  <a href="#/" class="brand" data-route="/">
+    <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true">
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#9b8cff"/>
+          <stop offset="1" stop-color="#5ae0e0"/>
+        </linearGradient>
+      </defs>
+      <circle cx="16" cy="16" r="14" fill="none" stroke="url(#bg)" stroke-width="2"/>
+      <circle cx="16" cy="16" r="9" fill="none" stroke="url(#bg)" stroke-width="1.5" opacity=".7"/>
+      <circle cx="16" cy="16" r="4" fill="url(#bg)"/>
+    </svg>
+    <span class="brand__name">Echo</span>
+  </a>
+
+  <nav class="nav" aria-label="Primary">
+    <a href="#/timeline" data-route="/timeline" class="nav__link">タイムライン</a>
+    <a href="#/compose" data-route="/compose" class="nav__link nav__link--cta">+ 未来へ送る</a>
+  </nav>
+</header>
+
+<main id="app" class="app"></main>
+
+<template id="view-landing">
+  <section class="hero">
+    <div class="hero__inner">
+      <p class="hero__eyebrow">A new kind of social — async, soulful, slow.</p>
+      <h1 class="hero__title">
+        いまの<span class="grad">想い</span>を、<br />
+        <span class="grad-2">未来</span>へ届けるSNS。
+      </h1>
+      <p class="hero__lead">
+        Echo (エコー) は、未来の日付に「開封」されるメッセージを世界へ投稿できる新しいSNSです。<br />
+        1日後の自分、1年後の恋人、10年後の世界。あなたの<b>今</b>が、未来で誰かの心を揺らす。
+      </p>
+      <div class="hero__cta">
+        <a class="btn btn--primary" href="#/compose">未来へメッセージを送る</a>
+        <a class="btn btn--ghost" href="#/timeline">いま開封中の声を聴く →</a>
+      </div>
+      <div class="hero__counters" id="heroCounters" aria-live="polite">
+        <div class="counter"><div class="counter__num" data-key="sealed">—</div><div class="counter__label">封印中</div></div>
+        <div class="counter"><div class="counter__num" data-key="opened">—</div><div class="counter__label">開封済み</div></div>
+        <div class="counter"><div class="counter__num" data-key="today">—</div><div class="counter__label">今日開く</div></div>
+      </div>
+    </div>
+    <div class="hero__capsules" aria-hidden="true">
+      <div class="cap cap--a">2026.04.25</div>
+      <div class="cap cap--b">2030.01.01</div>
+      <div class="cap cap--c">2027.12.24</div>
+      <div class="cap cap--d">2035.08.15</div>
+    </div>
+  </section>
+
+  <section class="features">
+    <h2 class="section-title">なぜ Echo なのか</h2>
+    <div class="feat-grid">
+      <article class="feat"><div class="feat__icon">⌛</div><h3>時間がコンテンツを熟成させる</h3><p>投稿は指定した未来の日まで誰にも見えません。時が経つほどに、言葉は重みを増します。</p></article>
+      <article class="feat"><div class="feat__icon">🌏</div><h3>世界がひとつのタイムラインに</h3><p>開封日を迎えた言葉が、世界中から同時に流れ着きます。今日という日が、誰かの未来でした。</p></article>
+      <article class="feat"><div class="feat__icon">🔒</div><h3>完全無料・匿名でOK</h3><p>ログイン不要で投稿可能。鍵付き投稿、特定の人だけが開ける手紙、すべて無料で始められます。</p></article>
+      <article class="feat"><div class="feat__icon">💌</div><h3>未来の自分に手紙を</h3><p>「Future Me」モードで、未来の自分宛てに投稿。指定日にこの端末で過去の自分と再会できます。</p></article>
+    </div>
+  </section>
+
+  <section class="timeline-preview">
+    <div class="section-header">
+      <h2 class="section-title">今日、世界が開いた声</h2>
+      <a href="#/timeline" class="link-arrow">すべて見る →</a>
+    </div>
+    <div class="post-grid" id="previewGrid"></div>
+  </section>
+
+  <section class="cta-band">
+    <div class="cta-band__inner">
+      <h2>いまの一行が、未来で誰かを救う。</h2>
+      <a class="btn btn--primary btn--lg" href="#/compose">無料で未来へ送る</a>
+    </div>
+  </section>
+</template>
+
+<template id="view-timeline">
+  <section class="timeline">
+    <header class="timeline__header">
+      <h1 class="page-title">タイムライン</h1>
+      <div class="filters" role="tablist">
+        <button class="chip is-active" data-filter="opened" role="tab">開封済み</button>
+        <button class="chip" data-filter="today" role="tab">今日開く</button>
+        <button class="chip" data-filter="sealed" role="tab">封印中</button>
+      </div>
+    </header>
+    <div class="post-grid" id="timelineGrid"></div>
+    <div id="timelineEmpty" class="empty" hidden>
+      <p>まだ投稿がありません。最初の一通を未来へ。</p>
+      <a class="btn btn--primary" href="#/compose">未来へ送る</a>
+    </div>
+  </section>
+</template>
+
+<template id="view-compose">
+  <section class="compose">
+    <h1 class="page-title">未来へ送る</h1>
+    <form id="composeForm" class="compose__form" novalidate>
+      <div class="field">
+        <label class="field__label">モード</label>
+        <div class="seg">
+          <input type="radio" name="mode" id="mWorld" value="world" checked />
+          <label for="mWorld">🌏 世界へ</label>
+          <input type="radio" name="mode" id="mSelf" value="self" />
+          <label for="mSelf">🪞 未来の自分へ</label>
+          <input type="radio" name="mode" id="mLocked" value="locked" />
+          <label for="mLocked">🔐 合言葉つき</label>
+        </div>
+        <p class="field__hint" data-hint="world">開封日になると、世界のタイムラインに公開されます。</p>
+        <p class="field__hint" data-hint="self" hidden>非公開。指定日にこの端末で再会できます (ローカル保存)。</p>
+        <p class="field__hint" data-hint="locked" hidden>合言葉を知っている人だけが開封できます。世界のタイムラインに「鍵付きカプセル」として表示されます。</p>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="cTitle">タイトル <span class="opt">(任意)</span></label>
+        <input id="cTitle" name="title" type="text" maxlength="60" placeholder="例: 未来の自分へ" />
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="cBody">本文 <span class="req">必須</span></label>
+        <textarea id="cBody" name="body" maxlength="1000" required rows="8" placeholder="今この瞬間の想い、夢、悩み、何でも。1000文字まで。"></textarea>
+        <div class="field__counter"><span id="bodyCount">0</span>/1000</div>
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label class="field__label" for="cAuthor">差出人 <span class="opt">(任意)</span></label>
+          <input id="cAuthor" name="author" type="text" maxlength="24" placeholder="匿名" />
+        </div>
+        <div class="field">
+          <label class="field__label" for="cOpenAt">開封日</label>
+          <input id="cOpenAt" name="openAt" type="date" required />
+          <div class="quick-dates">
+            <button type="button" class="chip-mini" data-add="1">+1日</button>
+            <button type="button" class="chip-mini" data-add="7">+1週</button>
+            <button type="button" class="chip-mini" data-add="30">+1ヶ月</button>
+            <button type="button" class="chip-mini" data-add="365">+1年</button>
+            <button type="button" class="chip-mini" data-add="1825">+5年</button>
+            <button type="button" class="chip-mini" data-add="3650">+10年</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="field" data-when="locked" hidden>
+        <label class="field__label" for="cPass">合言葉</label>
+        <input id="cPass" name="pass" type="text" maxlength="40" placeholder="開ける人だけが知っている言葉" />
+        <p class="field__hint">※ 合言葉は端末上でハッシュ化され、原文は送信されません。</p>
+      </div>
+
+      <div class="field">
+        <label class="check">
+          <input id="cAgree" type="checkbox" required />
+          <span>個人情報・他者を傷つける内容を含まないことに同意します。違反する投稿は予告なく削除されます。</span>
+        </label>
+      </div>
+
+      <div class="compose__actions">
+        <button type="submit" class="btn btn--primary btn--lg" id="submitBtn">
+          <span class="btn__label">封をして未来へ送る</span>
+          <span class="btn__spin" hidden></span>
+        </button>
+        <p class="form-error" id="formError" role="alert" hidden></p>
+      </div>
+    </form>
+  </section>
+</template>
+
+<template id="view-post">
+  <section class="postview" id="postViewRoot">
+    <a href="#/timeline" class="back-link">← タイムラインへ戻る</a>
+    <div id="postBody"></div>
+  </section>
+</template>
+
+<template id="view-404">
+  <section class="empty empty--center">
+    <h1 class="page-title">迷子のカプセル</h1>
+    <p>このページは未来でも過去でも見つかりません。</p>
+    <a class="btn btn--primary" href="#/">トップへ戻る</a>
+  </section>
+</template>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<footer class="footer">
+  <div class="footer__inner">
+    <div class="footer__brand">
+      <span class="brand__name">Echo</span>
+      <span class="muted">© <span id="year"></span> Echo. All capsules belong to the future.</span>
+    </div>
+    <nav class="footer__nav" aria-label="Footer">
+      <a href="#/about">About</a>
+      <a href="#/terms">利用規約</a>
+      <a href="#/privacy">プライバシー</a>
+      <a href="https://github.com/guttyanneruuuuuu/service10" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics-compat.js"></script>
+
+<script src="js/config.js"></script>
+<script src="js/util.js"></script>
+<script src="js/security.js"></script>
+<script src="js/analytics.js"></script>
+<script src="js/store.js"></script>
+<script src="js/views.js"></script>
+<script src="js/router.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

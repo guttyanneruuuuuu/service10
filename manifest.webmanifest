@@ -1,0 +1,14 @@
+{
+  "name": "Pulse Earth",
+  "short_name": "Pulse",
+  "description": "世界中の人の今この瞬間の感情が地球に降り注ぐリアルタイム可視化サイト",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#000814",
+  "theme_color": "#000814",
+  "icons": [
+    { "src": "assets/favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "assets/apple-touch-icon.svg", "sizes": "180x180", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

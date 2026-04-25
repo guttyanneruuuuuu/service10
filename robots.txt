@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://guttyanneruuuuuu.github.io/service10/sitemap.xml
